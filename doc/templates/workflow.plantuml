@@ -1,0 +1,84 @@
+@startuml
+
+title
+<img:./IDPLogo-64.png> <u>Aforeporter v@project.version@ - Program workflow</u>
+
+end title
+
+skinparam sequenceArrowThickness 2
+skinparam roundcorner 20
+skinparam sequenceParticipant underline
+skinparam maxMessageSize 400
+skinparam ParticipantPadding 20
+
+participant AfoReporter
+participant AfoSerenityTestParser
+participant AfoTestParser
+participant AfoTestResultParser
+
+[-> AfoReporter: Start
+
+activate AfoReporter
+AfoReporter -> AfoReporter : JCommander parse arguments
+AfoReporter -> AfoReporter : run
+create afos
+AfoReporter -> afos : create List<AfoData>
+create afotcs
+AfoReporter -> afotcs : create Map<String, List<Testcase>>
+create results
+AfoReporter -> results : create Map<String, TestResult>
+AfoReporter ->> AfoTestParser ++ : initThreadToParseTestcases(afotcs)
+AfoReporter ->> AfoTestResultParser ++ : initThreadToParseTestresults(results)
+
+AfoReporter -> AfoReporter : readAfos()
+
+deactivate AfoReporter
+
+alt bdd mode
+    loop : iterate over all folders recursively and parse all Serenity result files
+      AfoSerenityTestParser -> AfoSerenityTestParser : parseDirectory() calls next method for each result file found
+      AfoSerenityTestParser -> AfoSerenityTestParser : inspectFile()
+      AfoReporter <-- AfoSerenityTestParser : List<Testcase> afotcs
+    end
+    destroy AfoSerenityTestParser
+else junit mode
+    loop : iterate over all folders recursively and parse all java files
+      AfoTestParser -> AfoTestParser : parseDirectory() calls next method for each Java file found
+      AfoTestParser -> AfoTestParser : inspectJavaFile()
+      AfoTestParser -> afotcs : AfoTestParser::MethodVisitor
+      AfoReporter <-- AfoTestParser : List<Testcase> afotcs
+    end
+    destroy AfoTestParser
+end
+
+
+alt bdd mode
+    loop : iterate over all folders recursively and parse all Serenity result files
+      AfoSerenityTestParser -> AfoSerenityTestParser : parseDirectoryForResults() calls next method for each result file found
+      AfoSerenityTestParser -> AfoSerenityTestParser : inspectFileForResults()
+      AfoReporter <-- AfoSerenityTestParser : List<Testcase> afotcs
+    end
+    destroy AfoSerenityTestParser
+else junit mode
+    loop : iterate over all folders and parse all xml result files, test suites retrieving all test case results
+      AfoTestResultParser -> AfoTestResultParser : parseDirectory()
+      AfoTestResultParser -> AfoTestResultParser : parseJunitXMLResult()
+      AfoTestResultParser -> AfoTestResultParser : parsTestSuite()
+      AfoTestResultParser -> results : parseTestCase()
+      AfoTestResultParser --> AfoReporter ++ : List<TesTResult> resutls
+    end
+    destroy AfoTestResultParser
+end
+activate AfoReporter
+
+loop : over all afos
+  AfoReporter -> AfoReporter : determineRequirementResult()
+end
+destroy afotcs
+AfoReporter -> AfoReporter : createHTMLAfoList(testedAfos)
+AfoReporter -> AfoReporter : createHTMLAfoList(untestedAfos)
+AfoReporter -> AfoReporter : createHTMLReport()
+destroy afos
+destroy results
+
+@enduml

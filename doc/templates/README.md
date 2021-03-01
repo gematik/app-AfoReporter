@@ -1,4 +1,4 @@
-## AFO Reporter v1.0.3
+## AFO Reporter v@project.version@
 
 Der AfoReporter ermöglicht es die Überdeckung von Testergebnissen mit Anforderungen zu erstellen.
 
