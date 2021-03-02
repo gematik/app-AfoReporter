@@ -6,7 +6,6 @@
 /cmdline/target/
 /annotations/target/
 /src/main/java/de/gematik/idp/tests/aforeport/doc-files/workflow.plantuml
-/doc/images/workflow.svg
 /src/main/java/de/gematik/idp/tests/aforeport/doc-files/aforeporter.svg
 /src/main/java/de/gematik/idp/tests/aforeport/doc-files/workflow.svg
 /doc/images/aforeporter.svg

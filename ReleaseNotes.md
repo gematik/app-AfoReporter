@@ -1,3 +1,6 @@
+# Release 1.0.5
+Fixing workflow diagramme not shown on Github
+
 # Release 1.0.4
 Preparing for Maven Central
 
