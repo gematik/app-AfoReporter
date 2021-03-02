@@ -24,16 +24,18 @@ import static de.gematik.idp.tests.aforeport.Result.UNKNOWN;
 import static de.gematik.idp.tests.aforeport.Result.values;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
-@ExtendWith(TestResultLoggerExtension.class)
+//@ExtendWith(TestResultLoggerExtension.class)
 @Slf4j
 class TestAfoReporter {
 
@@ -399,5 +401,30 @@ class TestAfoReporter {
         final Result aforesult = sut.getRequirementStatusFrom(results);
         assertThat(aforesult).isEqualTo(oracle);
         log.debug("Test PASSED");
+    }
+
+
+    @Test
+    public void testBDDHTMLReportGeneratorOK() {
+        final AfoReporter reporter = new AfoReporter();
+        reporter.bdd = Collections
+            .singletonList(Paths.get("src", "test", "resources", "bdd").toFile().getAbsolutePath());
+        reporter.afofile = Paths.get("src", "test", "resources", "requirements.json").toFile().getAbsolutePath();
+
+        reporter.run();
+
+        assertThat(Paths.get("target", "site", "serenity", "aforeport.html").toFile()).exists();
+    }
+
+    @Test
+    public void testJUnitHTMLReportGeneratorOK() {
+        final AfoReporter reporter = new AfoReporter();
+        reporter.bdd = Collections
+            .singletonList(Paths.get("src", "test", "resources", "junit").toFile().getAbsolutePath());
+        reporter.afofile = Paths.get("src", "test", "resources", "requirements.json").toFile().getAbsolutePath();
+
+        reporter.run();
+
+        assertThat(Paths.get("target", "site", "serenity", "aforeport.html").toFile()).exists();
     }
 }

@@ -140,7 +140,7 @@ public class AfoReporter {
      *
      * @throws AfoReporterException in case there is any failure
      */
-    private void run() {
+    void run() {
         final List<AfoData> afos = new ArrayList<>();
         final Map<String, TestResult> results = new HashMap<>();
         final Map<String, List<Testcase>> afotcs = new HashMap<>();
@@ -222,6 +222,8 @@ public class AfoReporter {
         final List<AfoData> jsonAfos;
         jsonAfos = mapper.readValue(afofile, new TypeReference<>() {
         });
+        jsonAfos.stream().filter(afoData -> afoData.getStatus() == null)
+            .forEach(afoData -> afoData.setStatus(Result.UNKNOWN));
         afos.addAll(jsonAfos);
         if (log.isInfoEnabled()) {
             log.info(String.format("    read %d afos", afos.size()));

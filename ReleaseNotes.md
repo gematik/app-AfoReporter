@@ -1,3 +1,6 @@
+# Release 1.0.7
+Unittests für Codecoverage >= 60%
+
 # Release 1.0.6
 Fix für Sonar Qube Codesmells
 
