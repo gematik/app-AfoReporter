@@ -1,3 +1,6 @@
+# Release 1.0.10
+Integration mit SonarQube
+
 # Release 1.0.9
 Integration mit SonarQube
 

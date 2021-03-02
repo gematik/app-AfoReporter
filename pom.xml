@@ -7,7 +7,7 @@
   <groupId>de.gematik.idp.aforeporter</groupId>
   <artifactId>aforeporter</artifactId>
   <packaging>jar</packaging>
-  <version>1.0.9</version>
+  <version>1.0.10</version>
   <name>Gematik Afo Reporter</name>
   <description>
     Mit Hilfe des Afo Reporters können, basierend auf in JSON Dateien hinterlegten Anforderungen,
@@ -21,7 +21,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <junit-platform.version>5.4.2</junit-platform.version>
-    <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/../idp-report/target/site/jacoco-aggregate/jacoco.xml
+    <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/index.xml
     </sonar.coverage.jacoco.xmlReportPaths>
     <sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
     <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
@@ -389,8 +389,6 @@
         <executions>
           <execution>
             <configuration>
-              <append>true</append>
-              <destFile>${project.basedir}/target/jacoco.exec</destFile>
               <propertyName>surefireArgLine</propertyName>
             </configuration>
             <goals>
