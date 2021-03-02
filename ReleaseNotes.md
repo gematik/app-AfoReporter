@@ -1,3 +1,6 @@
+# Release 1.0.8
+Fix für Readme/pom version
+
 # Release 1.0.7
 Unittests für Codecoverage >= 60%
 
