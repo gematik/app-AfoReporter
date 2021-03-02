@@ -97,7 +97,7 @@ public class AfoSerenityTestParser implements ITestParser, ITestResultParser {
         }
     }
 
-    // TODO move to ctor for Testcase with JSONObject as param
+    // TO DO move to ctor for Testcase with JSONObject as param
     private void setTestCaseClassNMethod(final JSONObject jso, final Testcase tc) {
         final String id = jso.getString("id");
         final String[] idarr = id.split(";");
@@ -122,7 +122,7 @@ public class AfoSerenityTestParser implements ITestParser, ITestResultParser {
                     throw new AfoReporterException("Unable to find failure/error details in " + jso.toString(2));
                 }
                 tr.setErrmessage(jsoErr.getString("message"));
-                tr.setErrdetails(""); // TODO add stacktrace here
+                tr.setErrdetails(""); // TO DO add stacktrace here
                 tr.setErrtype(jsoErr.getString("errorType"));
             }
             results.put(tr.getClazz() + ":" + tr.getMethod(), tr);

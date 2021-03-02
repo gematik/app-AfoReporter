@@ -73,12 +73,16 @@ import org.apache.commons.io.IOUtils;
 @Slf4j
 public class AfoReporter {
 
+    private static final String FOLDER_IDP_GLOBAL = "idp-global";
+    private static final String FOLDER_TARGET = "target";
+
     /**
      * list of folders to parse for Serenity test result files.
      */
     @Parameter(names = {"-bdd", "-b"})
     List<String> bdd = Collections.singletonList(
-        Paths.get("..", "idp-global", "idp-testsuite", "target", "site", "serenity").toAbsolutePath().toString());
+        Paths.get("..", FOLDER_IDP_GLOBAL, "idp-testsuite", FOLDER_TARGET, "site", "serenity").toAbsolutePath()
+            .toString());
     /**
      * name of the file containing the requirements.
      */
@@ -94,14 +98,15 @@ public class AfoReporter {
      */
     @Parameter(names = {"-testroot", "-tr"})
     List<String> testRoot = Collections
-        .singletonList(Paths.get("..", "idp-global", "idp-server", "src", "test").toAbsolutePath().toString());
+        .singletonList(Paths.get("..", FOLDER_IDP_GLOBAL, "idp-server", "src", "test").toAbsolutePath().toString());
     /**
      * list of folders to parse for JUnit XML test result files.
      */
     @Parameter(names = {"-resultroot", "-rr"})
     List<String> resultRoot = Collections
         .singletonList(
-            Paths.get("..", "idp-global", "idp-server", "target", "surefire-reports").toAbsolutePath().toString());
+            Paths.get("..", FOLDER_IDP_GLOBAL, "idp-server", FOLDER_TARGET, "surefire-reports").toAbsolutePath()
+                .toString());
 
     /**
      * memorizes any exception happening in any of the threads so that we can abort execution in the main thread if
@@ -252,20 +257,24 @@ public class AfoReporter {
                     }
                     resultParser.parseDirectoryForResults(results, new File(rootdir));
                 }
-                if (log.isInfoEnabled()) {
-                    log.info(String.format("    %d test results parsed...", results.size()));
-                }
-                for (final TestResult tr : results.values()) {
-                    if (log.isDebugEnabled()) {
-                        log.debug(String.format("      RES %s %s:%s", tr.getStatus(), tr.getClazz(), tr.getMethod()));
-                    }
-                }
+                logTestResultParsingResults(results);
             } catch (final Exception e) {
                 log.error("Failure while parsing test results", e);
                 reportException(e);
             }
         }, "res");
         return parseResults;
+    }
+
+    private void logTestResultParsingResults(final Map<String, TestResult> results) {
+        if (log.isInfoEnabled()) {
+            log.info(String.format("    %d test results parsed...", results.size()));
+        }
+        for (final TestResult tr : results.values()) {
+            if (log.isDebugEnabled()) {
+                log.debug(String.format("      RES %s %s:%s", tr.getStatus(), tr.getClazz(), tr.getMethod()));
+            }
+        }
     }
 
     /**
@@ -279,27 +288,9 @@ public class AfoReporter {
         parseTestcases = new Thread(() -> {
             try {
                 if (bdd.isEmpty()) {
-                    for (final String rootdir : testRoot) {
-                        if (log.isInfoEnabled()) {
-                            log.info(String.format("    parsing test source code in  %s...", rootdir));
-                        }
-                        // TODO refactor ctor out of loop and simplify if branches
-                        // FIRST check if reusing the parser is ok and doe snot have any side effects
-                        final AfoJavaTestParser testParser = new AfoJavaTestParser();
-                        testParser.parseDirectory(new File(rootdir));
-                        // merge afotcs with parsed tcs per afo
-                        mergeAfotcsWithParsedTcsPerAfo(afotcs, testParser);
-                    }
+                    parseTestCasesFromJavaSource(afotcs);
                 } else {
-                    for (final String rootdir : bdd) {
-                        if (log.isInfoEnabled()) {
-                            log.info(String.format("    parsing test source code in  %s...", rootdir));
-                        }
-                        final AfoSerenityTestParser testParser = new AfoSerenityTestParser();
-                        testParser.parseDirectory(new File(rootdir));
-                        // merge afotcs with parsed tcs per afo
-                        mergeAfotcsWithParsedTcsPerAfo(afotcs, testParser);
-                    }
+                    parseScenariosFromSerenityResults(afotcs);
                 }
                 int tcs = 0;
                 for (final List<Testcase> tclist : afotcs.values()) {
@@ -315,6 +306,32 @@ public class AfoReporter {
             }
         }, "tcs");
         return parseTestcases;
+    }
+
+    private void parseScenariosFromSerenityResults(final Map<String, List<Testcase>> afotcs) {
+        for (final String rootdir : bdd) {
+            if (log.isInfoEnabled()) {
+                log.info(String.format("    parsing test source code in  %s...", rootdir));
+            }
+            final AfoSerenityTestParser testParser = new AfoSerenityTestParser();
+            testParser.parseDirectory(new File(rootdir));
+            // merge afotcs with parsed tcs per afo
+            mergeAfotcsWithParsedTcsPerAfo(afotcs, testParser);
+        }
+    }
+
+    private void parseTestCasesFromJavaSource(final Map<String, List<Testcase>> afotcs) {
+        for (final String rootdir : testRoot) {
+            if (log.isInfoEnabled()) {
+                log.info(String.format("    parsing test source code in  %s...", rootdir));
+            }
+            // TO DO refactor ctor out of loop and simplify if branches
+            // FIRST check if reusing the parser is ok and doe snot have any side effects
+            final AfoJavaTestParser testParser = new AfoJavaTestParser();
+            testParser.parseDirectory(new File(rootdir));
+            // merge afotcs with parsed tcs per afo
+            mergeAfotcsWithParsedTcsPerAfo(afotcs, testParser);
+        }
     }
 
     private void logResults(final Map<String, List<Testcase>> afotcs, final int tcs) {
@@ -425,7 +442,7 @@ public class AfoReporter {
      * @return "target/aforeport.html" file
      */
     private File checkTargetFolderNReportFile() {
-        final File target = Paths.get("target", "site", "serenity").toFile();
+        final File target = Paths.get(FOLDER_TARGET, "site", "serenity").toFile();
         if (!target.exists() && !target.mkdirs()) {
             throw new AfoReporterException("Unable to create a target folder " + target.getAbsolutePath() + "!");
         }
