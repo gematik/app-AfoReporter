@@ -7,13 +7,95 @@
   <groupId>de.gematik.idp.aforeporter</groupId>
   <artifactId>aforeporter</artifactId>
   <packaging>jar</packaging>
-  <version>1.0.3</version>
+  <version>1.0.4</version>
   <name>Gematik Afo Reporter</name>
   <description>
     Mit Hilfe des Afo Reporters können, basierend auf in JSON Dateien hinterlegten Anforderungen,
     mit BDD/Serenity bzw. JUnit Testfälle/Ergebnissen verlinkt als Testbericht darstellen.
   </description>
-  <url>https://github.com/gematik/${github.project.name}</url>
+  <url>https://github.com/gematik/app-AfoReporter</url>
+
+  <properties>
+    <maven.compiler.source>11</maven.compiler.source>
+    <maven.compiler.target>11</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+  </properties>
+
+  <scm>
+    <url>https://github.com/gematik/app-AfoReporter</url>
+    <connection>scm:git:git://github.com/gematik/app-AfoReporter.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com:gematik/app-AfoReporter.git</developerConnection>
+  </scm>
+
+  <issueManagement>
+    <system>GitHub</system>
+    <url>https://github.com/gematik/app-AfoReporter/issues</url>
+  </issueManagement>
+
+  <organization>
+    <name>gematik GmbH</name>
+    <url>http://www.gematik.de</url>
+  </organization>
+
+  <licenses>
+    <license>
+      <name>Apache License 2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <name>gematik</name>
+      <email>software-development@gematik.de</email>
+      <url>https://gematik.github.io/</url>
+      <organization>gematik GmbH</organization>
+      <organizationUrl>https://www.gematik.de/</organizationUrl>
+    </developer>
+  </developers>
+
+  <profiles>
+    <profile>
+      <id>external</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>1.6</version>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+                <configuration>
+                  <gpgArguments>
+                    <arg>--pinentry-mode</arg>
+                    <arg>loopback</arg>
+                  </gpgArguments>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.sonatype.plugins</groupId>
+            <artifactId>nexus-staging-maven-plugin</artifactId>
+            <version>1.6.7</version>
+            <extensions>true</extensions>
+            <configuration>
+              <serverId>ossrh</serverId>
+              <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+              <autoReleaseAfterClose>false</autoReleaseAfterClose>
+              <stagingProgressTimeoutMinutes>20</stagingProgressTimeoutMinutes>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 
   <dependencies>
     <!-- Misc -->
@@ -80,89 +162,6 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-
-  <properties>
-    <maven.compiler.source>11</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <github.project.name>aforeporter</github.project.name>
-  </properties>
-
-  <scm>
-    <url>https://github.com/gematik/${github.project.name}</url>
-    <connection>scm:git:git://github.com/gematik/${github.project.name}.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com:gematik/${github.project.name}.git</developerConnection>
-  </scm>
-
-  <issueManagement>
-    <system>GitHub</system>
-    <url>https://github.com/gematik/${github.project.name}/issues</url>
-  </issueManagement>
-
-  <organization>
-    <name>gematik GmbH</name>
-    <url>http://www.gematik.de</url>
-  </organization>
-
-  <licenses>
-    <license>
-      <name>Apache License 2.0</name>
-      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
-    </license>
-  </licenses>
-
-  <developers>
-    <developer>
-      <name>gematik</name>
-      <email>software-development@gematik.de</email>
-      <url>https://gematik.github.io/</url>
-      <organization>gematik GmbH</organization>
-      <organizationUrl>https://www.gematik.de/</organizationUrl>
-    </developer>
-  </developers>
-
-  <profiles>
-    <profile>
-      <id>external</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-gpg-plugin</artifactId>
-            <version>1.6</version>
-            <executions>
-              <execution>
-                <id>sign-artifacts</id>
-                <phase>verify</phase>
-                <goals>
-                  <goal>sign</goal>
-                </goals>
-                <configuration>
-                  <gpgArguments>
-                    <arg>--pinentry-mode</arg>
-                    <arg>loopback</arg>
-                  </gpgArguments>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <groupId>org.sonatype.plugins</groupId>
-            <artifactId>nexus-staging-maven-plugin</artifactId>
-            <version>1.6.7</version>
-            <extensions>true</extensions>
-            <configuration>
-              <serverId>ossrh</serverId>
-              <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-              <autoReleaseAfterClose>false</autoReleaseAfterClose>
-              <stagingProgressTimeoutMinutes>20</stagingProgressTimeoutMinutes>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
 
   <build>
     <defaultGoal>clean package</defaultGoal>
@@ -440,6 +439,7 @@
 
     </plugins>
   </build>
+
   <reporting>
     <plugins>
       <plugin>
