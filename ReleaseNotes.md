@@ -1,3 +1,6 @@
+# Release 1.0.12
+Maven central Release 
+
 # Release 1.0.11
 Release candidate fur Maven central
 
