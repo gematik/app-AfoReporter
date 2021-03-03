@@ -7,7 +7,7 @@
   <groupId>de.gematik.idp.aforeporter</groupId>
   <artifactId>aforeporter</artifactId>
   <packaging>jar</packaging>
-  <version>1.0.10</version>
+  <version>1.0.11</version>
   <name>Gematik Afo Reporter</name>
   <description>
     Mit Hilfe des Afo Reporters können, basierend auf in JSON Dateien hinterlegten Anforderungen,
@@ -151,14 +151,8 @@
     <!-- Test -->
     <dependency>
       <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-engine</artifactId>
-      <version>5.4.2</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-params</artifactId>
-      <version>5.4.2</version>
+      <version>${junit-platform.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -398,7 +392,7 @@
           <execution>
             <configuration>
             </configuration>
-            <phase>prepare-package</phase>
+            <phase>test</phase>
             <goals>
               <goal>report</goal>
             </goals>

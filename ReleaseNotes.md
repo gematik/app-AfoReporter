@@ -1,3 +1,6 @@
+# Release 1.0.11
+Release candidate fur Maven central
+
 # Release 1.0.10
 Integration mit SonarQube
 

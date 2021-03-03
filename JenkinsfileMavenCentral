@@ -25,18 +25,23 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stage('Verify') {
+            steps {
+                sh "mvn verify"
+            }
+        }
+/*        stage('Build') {
             steps {
                 mavenBuild()
             }
         }
 
         stage('Unit Test') {
-            steps {
+           steps {
                 mavenTest()
             }
         }
-
+*/
         stage('Sonar') {
             steps {
                 mavenCheckWithSonarQube()
