@@ -75,7 +75,7 @@ public class AfoData {
     public void sanitizeAfoId() {
         final String afoid = getId();
         final int adash = afoid.indexOf("A_");
-        final int dash = afoid.indexOf("-", adash + 1);
+        final int dash = afoid.indexOf('-', adash + 1);
         if (dash != -1) {
             setVersion(afoid.substring(dash + 1));
             setId(afoid.substring(0, dash));

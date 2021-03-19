@@ -1,4 +1,4 @@
-## AFO Reporter v1.0.14
+## AFO Reporter v1.0.15
 
 Der AfoReporter ermöglicht es die Überdeckung von Testergebnissen mit Anforderungen zu erstellen.
 
@@ -6,16 +6,20 @@ Der AfoReporter ermöglicht es die Überdeckung von Testergebnissen mit Anforder
 
 ## Kommandozeilenparameter
 
-* -bdd (-b) definiert ein Basisverzeichnis, unterhalb welchem alle Serenity Testergebnis Dateien geparsed werden.
-  **(default: "../idp-global/idp-testsuite/target/site/serenity")**
-* -testroot (-tr) definiert ein Basisverzeichnis, unterhalb welchem alle Test Methoden geparsed werden.
+* -bdd (-b) definiert ein Basisverzeichnis, unterhalb welchem alle Serenity Testergebnis JSON Dateien geparsed werden.
+  **(default: LEER!)**
+* -testroot (-tr) definiert ein Basisverzeichnis, unterhalb welchem alle Test Methoden und Cucumber feature Dateien
+  geparsed werden.
   **(default: "../idp-global/idp-server/src/test")**
-* -resultroot (-tr) definiert ein Basisverzeichnis, unterhalb welchem alle Testergebnis XML Dateien geparsed werden.
+* -resultroot (-tr) definiert ein Basisverzeichnis, unterhalb welchem alle JUNIT Testergebnis XML Dateien geparsed
+  werden.
   **(default: "../idp-global/idp-server/target/surefire-reports")**
 * -file (-f) Dateinamen (JSON Datei) aus der die Anforderungen gelesen werden sollen.
   **(default: requirements.json)**
 * -template (-tpl): Verzeichnis in welchem HTML Vorlagen liegen die zur Erstellung des Berichts verwendet werden.
   **(default: es werden die im Jar Archive mitgelieferten Templates verwendet)**
+* -dump (-d): whether to dump debug log messages to console or not. **(default false)**
+* -out (-o): file to write the HTML report to **(default: target/site/serenity/aforeport.html)**
 
 Zur Angabe mehrere Basisverzeichnisse einfach den Parameter wiederholt angeben. Unter Linux Beispielsweise:
 

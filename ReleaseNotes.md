@@ -1,3 +1,6 @@
+# Release 1.0.15
+added option to save HTML report to specific file
+
 # Release 1.0.14
 increased code coverage for mvn central release
 

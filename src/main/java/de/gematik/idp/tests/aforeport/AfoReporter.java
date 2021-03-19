@@ -56,10 +56,13 @@ import org.springframework.web.util.HtmlUtils;
  * <p>Command line parameters:
  * <ul>
  *     <li>-f: file containing requirements</li>
- *     <li>-tr: root folder for test source code, to parse for test methods. Can be used multiple times for multiple folders</li>
+ *     <li>-tr: root folder for test source code, to parse for test methods and cucumber scenarios.
+ *              Can be used multiple times for multiple folders</li>
  *     <li>-rr: root folder for test result files, to parse the results from. Can be used multiple times for multiple folders</li>
  *     <li>-bdd: root folder for Serenity test result files, to parse the results from. Can be used multiple times for multiple folders</li>
  *     <li>-tpl: folder containing html template files to be used when generating the report</li>
+ *     <li>-d: dump debug logs to console</li>
+ *     <li>-o: file to save HTML report to</li>
  * </ul>
  * <p>
  * Presence of bdd argument overrules tr or rr parameters (you can only parse Serenity OR Junit)
@@ -109,9 +112,11 @@ public class AfoReporter {
         .singletonList(
             Paths.get("..", FOLDER_IDP_GLOBAL, "idp-server", FOLDER_TARGET, "surefire-reports").toAbsolutePath()
                 .toString());
-
     @Parameter(names = {"-dump", "-d"})
     boolean dump;
+    @Parameter(names = {"-out", "-o"})
+    String reportFile = Paths.get("target", "site", "serenity", "aforeport.html").toAbsolutePath().toString();
+
 
     /**
      * memorizes any exception happening in any of the threads so that we can abort execution in the main thread if
@@ -492,17 +497,17 @@ public class AfoReporter {
     }
 
     /**
-     * checks whether target fodler exists and creates it if not. Also checks if there is a report file and if deletes
+     * checks whether target folder exists and creates it if not. Also checks if there is a report file and if deletes
      * it.
      *
-     * @return "target/aforeport.html" file
+     * @return the HTML report file
      */
     private File checkTargetFolderNReportFile() {
-        final File target = Paths.get(FOLDER_TARGET, "site", "serenity").toFile();
+        final File aforeport = new File(reportFile);
+        final File target = aforeport.getParentFile();
         if (!target.exists() && !target.mkdirs()) {
             throw new AfoReporterException("Unable to create a target folder " + target.getAbsolutePath() + "!");
         }
-        final File aforeport = new File(target, "aforeport.html");
         if (aforeport.exists()) {
             try {
                 Files.delete(aforeport.toPath());
