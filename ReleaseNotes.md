@@ -1,3 +1,6 @@
+# Release 1.0.16
+mvn central release
+
 # Release 1.0.15
 added option to save HTML report to specific file
 
