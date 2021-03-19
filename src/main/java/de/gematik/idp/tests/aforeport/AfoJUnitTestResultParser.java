@@ -22,29 +22,24 @@ import java.util.Map;
 import java.util.Objects;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 
+@Slf4j
 public class AfoJUnitTestResultParser implements ITestResultParser {
-
-    /**
-     * Logger for reporting workflow progress in parsing test results.
-     */
-    public static final Logger L = LoggerFactory.getLogger(AfoJavaTestParser.class.getSimpleName());
 
     @Override
     public void parseDirectoryForResults(final Map<String, TestResult> results, final File rootDir) {
         if (rootDir == null) {
-            L.warn("Invalid NULL test result root dir");
+            log.warn("Invalid NULL test result root dir");
         } else {
             if (rootDir.listFiles() == null) {
-                if (L.isWarnEnabled()) {
-                    L.warn(String.format("Invalid test result root dir %s", rootDir.getAbsolutePath()));
+                if (log.isWarnEnabled()) {
+                    log.warn(String.format("Invalid test result root dir %s", rootDir.getAbsolutePath()));
                 }
             } else {
                 Arrays.asList(Objects.requireNonNull(rootDir.listFiles())).forEach(f -> {
@@ -68,8 +63,8 @@ public class AfoJUnitTestResultParser implements ITestResultParser {
                 parseTestSuite((Element) suites.item(i), results);
             }
         } catch (final Exception e) {
-            if (L.isWarnEnabled()) {
-                L.warn(String.format("Failure while parsing result file %s", file.getAbsolutePath()), e);
+            if (log.isWarnEnabled()) {
+                log.warn(String.format("Failure while parsing result file %s", file.getAbsolutePath()), e);
             }
         }
     }

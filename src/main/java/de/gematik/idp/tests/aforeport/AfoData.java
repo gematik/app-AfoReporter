@@ -19,21 +19,22 @@ package de.gematik.idp.tests.aforeport;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.List;
 import lombok.Data;
-import lombok.Getter;
 
 @Data
-@Getter
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AfoData {
 
     private String id;
+    private String version;
     private String title;
     private Result status;
     private List<TestResult> results;
     private AfoStatus afoStatus;
     private String refName;
     private String refURL;
-
+    private String description;
+    private String petStatus;
+    private String authorMail;
 
     // default ctor needed for Jackson object mapper
     public AfoData() {
@@ -45,16 +46,47 @@ public class AfoData {
         this.title = title;
     }
 
-    public void merge(final AfoData afo) {
-        afoStatus = afo.getAfoStatus();
-        refName = afo.getRefName();
-        refURL = afo.getRefURL();
-        if (afo.getAfoStatus() == AfoStatus.DELETED) {
+    public void merge(final AfoData localAfo) {
+        afoStatus = localAfo.getAfoStatus();
+        refName = localAfo.getRefName();
+        refURL = localAfo.getRefURL();
+        if (localAfo.getAfoStatus() == AfoStatus.DELETED) {
             status = Result.UNKNOWN;
         }
+        if (version == null) {
+            if (localAfo.getVersion() != null) {
+                version = localAfo.getVersion();
+            }
+        } else if (localAfo.getVersion() != null) {
+            final int v1 = Integer.parseInt(version.replaceFirst("^0+", ""));
+            final int v2 = Integer.parseInt(localAfo.getVersion().replaceFirst("^0+", ""));
+            if (v1 > v2) {
+                version = localAfo.getVersion();
+            }
+        }
+        // else keep version !
     }
 
     public AfoStatus getAfoStatus() {
         return afoStatus != null ? afoStatus : AfoStatus.NOTSET;
+    }
+
+    // used by PolarionRetriever
+    public void sanitizeAfoId() {
+        final String afoid = getId();
+        final int adash = afoid.indexOf("A_");
+        final int dash = afoid.indexOf("-", adash + 1);
+        if (dash != -1) {
+            setVersion(afoid.substring(dash + 1));
+            setId(afoid.substring(0, dash));
+        }
+    }
+
+    public String getIdAndVersion() {
+        if (version != null) {
+            return id + "-" + version;
+        } else {
+            return id;
+        }
     }
 }

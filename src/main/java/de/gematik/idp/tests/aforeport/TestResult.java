@@ -16,11 +16,13 @@
 
 package de.gematik.idp.tests.aforeport;
 
-import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 @EqualsAndHashCode(callSuper = true)
-@Data
 public class TestResult extends Testcase {
 
     String suite;

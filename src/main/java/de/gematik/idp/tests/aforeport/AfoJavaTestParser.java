@@ -42,11 +42,7 @@ import lombok.extern.slf4j.Slf4j;
 public class AfoJavaTestParser implements ITestParser {
 
     private final Map<String, List<Testcase>> parsedTestcasesPerAfo = new HashMap<>();
-
-    @Override
-    public void resetMap() {
-        parsedTestcasesPerAfo.clear();
-    }
+    private final Map<String, Testcase> parsedTestcases = new HashMap<>();
 
     public void parseDirectory(final File rootDir) {
         if (rootDir == null) {
@@ -151,6 +147,7 @@ public class AfoJavaTestParser implements ITestParser {
                 final Testcase tc = new Testcase();
                 tc.setClazz(clazzname);
                 tc.setMethod(methodname);
+                parser.parsedTestcases.putIfAbsent(id, tc);
                 parser.parsedTestcasesPerAfo.get(id).add(tc);
             } else {
                 throw new AfoReporterException(

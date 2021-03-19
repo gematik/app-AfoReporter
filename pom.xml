@@ -7,11 +7,11 @@
   <groupId>de.gematik.idp.aforeporter</groupId>
   <artifactId>aforeporter</artifactId>
   <packaging>jar</packaging>
-  <version>1.0.12</version>
+  <version>1.0.13</version>
   <name>Gematik Afo Reporter</name>
   <description>
     Mit Hilfe des Afo Reporters können, basierend auf in JSON Dateien hinterlegten Anforderungen,
-    mit BDD/Serenity bzw. JUnit Testfälle/Ergebnissen verlinkt als Testbericht darstellen.
+    mit BDD/Serenity bzw. JUnit Testfälle/Ergebnissen verlinkt als Testbericht dargestellt werden.
   </description>
   <url>https://github.com/gematik/app-AfoReporter</url>
 
@@ -94,7 +94,6 @@
             <configuration>
               <serverId>ossrh</serverId>
               <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-              <autoReleaseAfterClose>false</autoReleaseAfterClose>
               <stagingProgressTimeoutMinutes>20</stagingProgressTimeoutMinutes>
             </configuration>
           </plugin>
@@ -148,6 +147,24 @@
       <version>20201115</version>
     </dependency>
 
+    <!-- https://mvnrepository.com/artifact/io.cucumber/cucumber-core -->
+    <dependency>
+      <groupId>io.cucumber</groupId>
+      <artifactId>cucumber-core</artifactId>
+      <version>5.5.0</version>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/io.cucumber/cucumber-java -->
+    <dependency>
+      <groupId>io.cucumber</groupId>
+      <artifactId>cucumber-java</artifactId>
+      <version>5.5.0</version>
+    </dependency>
+    <dependency>
+      <groupId>io.cucumber</groupId>
+      <artifactId>cucumber-gherkin-vintage</artifactId>
+      <version>5.5.0</version>
+    </dependency>
+
     <!-- Test -->
     <dependency>
       <groupId>org.junit.jupiter</groupId>
@@ -173,11 +190,41 @@
       <version>3.18.1</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>io.cucumber</groupId>
+      <artifactId>cucumber-core</artifactId>
+      <version>4.8.0</version>
+    </dependency>
+    <dependency>
+      <groupId>io.cucumber</groupId>
+      <artifactId>gherkin</artifactId>
+      <version>5.1.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-web</artifactId>
+      <version>5.2.9.RELEASE</version>
+    </dependency>
   </dependencies>
 
   <build>
     <defaultGoal>clean package</defaultGoal>
-
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+        <includes>
+          <include>**/version.txt</include>
+        </includes>
+      </resource>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>false</filtering>
+        <excludes>
+          <exclude>**/version.txt</exclude>
+        </excludes>
+      </resource>
+    </resources>
     <plugins>
 
       <!-- install: copy readme.md from doc to basedir and workflow.plantuml to src/java/...aforeport/doc-files
@@ -474,6 +521,8 @@
         <configuration>
           <archive>
             <manifest>
+              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+              <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
               <mainClass>de.gematik.idp.tests.aforeport.AfoReporter</mainClass>
             </manifest>
           </archive>
@@ -494,7 +543,9 @@
             <configuration>
               <arguments>
                 <argument>-bdd</argument>
-                <argument>../../idp-global/idp-testsuite/target/site/serenity</argument>
+                <argument>../idp-global/idp-testsuite/src/test/resources/features</argument>
+                <argument>-rr</argument>
+                <argument>../idp-global/idp-testsuite/target/site/serenity</argument>
               </arguments>
               <mainClass>de.gematik.idp.tests.aforeport.AfoReporter</mainClass>
               <cleanupDaemonThreads>false</cleanupDaemonThreads>

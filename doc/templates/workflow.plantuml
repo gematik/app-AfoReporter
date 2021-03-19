@@ -35,7 +35,7 @@ AfoReporter -> AfoReporter : readAfos()
 deactivate AfoReporter
 
 alt bdd mode
-    loop : iterate over all folders recursively and parse all Serenity result files
+    loop : iterate over all folders recursively and parse all cucumber feature files
       AfoSerenityTestParser -> AfoSerenityTestParser : parseDirectory() calls next method for each result file found
       AfoSerenityTestParser -> AfoSerenityTestParser : inspectFile()
       AfoReporter <-- AfoSerenityTestParser : List<Testcase> afotcs
@@ -71,10 +71,16 @@ else junit mode
 end
 activate AfoReporter
 
+loop : over all local afos
+  AfoReporter -> AfoReporter : checkForDublettes()
+end
+
 loop : over all afos
   AfoReporter -> AfoReporter : determineRequirementResult()
+  AfoReporter -> AfoReporter : mergeTestResults
 end
 destroy afotcs
+
 AfoReporter -> AfoReporter : createHTMLAfoList(testedAfos)
 AfoReporter -> AfoReporter : createHTMLAfoList(untestedAfos)
 AfoReporter -> AfoReporter : createHTMLReport()

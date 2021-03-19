@@ -1,3 +1,9 @@
+# Release 1.0.13
+New Report Layout, LooknFeel
+Afos now have more information (description, binding status)
+Reporter now checks for orphaned Afos in Testresults and logs them to console
+Afos are now merged/identified without considering version postfix
+
 # Release 1.0.12
 Maven central Release 
 

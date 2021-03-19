@@ -22,6 +22,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -34,11 +35,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Properties;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.springframework.web.util.HtmlUtils;
 
 /**
  * <p>This class allows to create requirement coverage statistics out of polarion requirements (AKA afos),
@@ -108,14 +112,46 @@ public class AfoReporter {
             Paths.get("..", FOLDER_IDP_GLOBAL, "idp-server", FOLDER_TARGET, "surefire-reports").toAbsolutePath()
                 .toString());
 
+    @Parameter(names = {"-dump", "-d"})
+    boolean dump;
+
     /**
      * memorizes any exception happening in any of the threads so that we can abort execution in the main thread if
      * anything happened.
      */
     private Exception threadException = null;
 
+    public static String getReporterVersion() {
+        String version = null;
+
+        // try to load from maven properties first
+        try {
+            final Properties p = new Properties();
+            final InputStream is = AfoReporter.class
+                .getResourceAsStream("/version.txt");
+            if (is != null) {
+                p.load(is);
+                version = p.getProperty("version", "");
+            }
+        } catch (final Exception e) {
+            final Package aPackage = AfoReporter.class.getPackage();
+            if (aPackage != null) {
+                version = aPackage.getImplementationVersion();
+                if (version == null) {
+                    version = aPackage.getSpecificationVersion();
+                }
+            }
+        }
+
+        if (version == null) {
+            version = "?";
+        }
+
+        return version;
+    }
+
     public static void main(final String[] args) {
-        log.info("STARTING AfoReporter...");
+        log.info("STARTING AfoReporter V" + getReporterVersion() + "...");
         final AfoReporter main = new AfoReporter();
         log.info("  parsing cmd line...");
         JCommander.newBuilder().addObject(main).build().parse(args);
@@ -166,6 +202,11 @@ public class AfoReporter {
         joinWorkerThreadAndRethrowAnyThreadException(parseTestcases);
         joinWorkerThreadAndRethrowAnyThreadException(parseResults);
 
+        log.info("  checking for orphaned afos...");
+        afotcs.keySet().stream()
+            .filter(afoid -> afos.stream().noneMatch(afo -> afo.getId().equals(afoid)))
+            .forEach(afoid -> log.warn("    Orphaned Afo with ID '" + afoid + "'"));
+
         log.info("  merging afos, tcs, results...");
         // walk through all test cases of all afos, look the test case up in results and replace it with the result
         // if no test case is found in the results map create UNKNOWN test result and replace it with that
@@ -173,7 +214,14 @@ public class AfoReporter {
         afos.stream()
             .filter(afo -> !"deleted".equals(afo.getAfoStatus().toString()))
             .forEach(afo -> determineRequirementResult(afo, afotcs.get(afo.getId()), results));
-        createHTMLReport(afos, results);
+
+        final List<TestResult> unreferencedTestresults = new ArrayList<>(results.values());
+        afotcs.forEach((afoid, tcs) -> tcs.stream()
+            .filter(tc -> unreferencedTestresults.stream()
+                .anyMatch(unreftc -> unreftc.equals(tc)))
+            .forEach(unreferencedTestresults::remove));
+
+        createHTMLReport(afos, results, unreferencedTestresults);
     }
 
     /**
@@ -185,14 +233,12 @@ public class AfoReporter {
      */
     private void joinWorkerThreadAndRethrowAnyThreadException(final Thread thread) {
         if (thread == null) {
-            log.debug("Thread not initialized, no need to wait");
+            debug("Thread not initialized, no need to wait");
             return;
         }
         try {
             if (thread.isAlive()) {
-                if (log.isDebugEnabled()) {
-                    log.debug(String.format("Joining thread %s", thread.getName()));
-                }
+                debug(String.format("Joining thread %s", thread.getName()));
                 thread.join();
             }
         } catch (final InterruptedException e) {
@@ -249,8 +295,8 @@ public class AfoReporter {
                     folders = resultRoot;
                     logmsg = "    parsing test rsults in  %s...";
                 } else {
-                    resultParser = new AfoSerenityTestParser();
-                    folders = bdd;
+                    resultParser = new AfoSerenityTestResultParser();
+                    folders = resultRoot;
                     logmsg = "    parsing serenity results in  %s...";
                 }
                 for (final String rootdir : folders) {
@@ -273,9 +319,7 @@ public class AfoReporter {
             log.info(String.format("    %d test results parsed...", results.size()));
         }
         for (final TestResult tr : results.values()) {
-            if (log.isDebugEnabled()) {
-                log.debug(String.format("      RES %s %s:%s", tr.getStatus(), tr.getClazz(), tr.getMethod()));
-            }
+            debug(String.format("      RES %s %s:%s", tr.getStatus(), tr.getClazz(), tr.getMethod()));
         }
     }
 
@@ -288,20 +332,17 @@ public class AfoReporter {
     private Thread initThreadToParseTestcases(final Map<String, List<Testcase>> afotcs) {
         final Thread parseTestcases;
         parseTestcases = new Thread(() -> {
+            final Map<String, Testcase> tcsMap;
             try {
-                if (bdd.isEmpty()) {
-                    parseTestCasesFromJavaSource(afotcs);
-                } else {
-                    parseScenariosFromSerenityResults(afotcs);
-                }
-                int tcs = 0;
-                for (final List<Testcase> tclist : afotcs.values()) {
-                    if (tclist != null) {
-                        tcs += tclist.size();
-                    }
-                }
 
-                logResults(afotcs, tcs);
+                if (bdd.isEmpty()) {
+                    tcsMap = parseTestCasesFromJavaSource(afotcs);
+                } else {
+                    tcsMap = parseScenariosFromCucumberSource(afotcs);
+                }
+                logResults(afotcs, tcsMap);
+
+
             } catch (final Exception e) {
                 log.error("Failure while parsing test source code", e);
                 reportException(e);
@@ -310,43 +351,40 @@ public class AfoReporter {
         return parseTestcases;
     }
 
-    private void parseScenariosFromSerenityResults(final Map<String, List<Testcase>> afotcs) {
+    private Map<String, Testcase> parseScenariosFromCucumberSource(final Map<String, List<Testcase>> afotcs) {
+        final AfoCucumberTestParser testParser = new AfoCucumberTestParser();
         for (final String rootdir : bdd) {
             if (log.isInfoEnabled()) {
-                log.info(String.format("    parsing test source code in  %s...", rootdir));
+                log.info(String.format("    parsing cucumber scenarios in  %s...", rootdir));
             }
-            final AfoSerenityTestParser testParser = new AfoSerenityTestParser();
             testParser.parseDirectory(new File(rootdir));
-            // merge afotcs with parsed tcs per afo
-            mergeAfotcsWithParsedTcsPerAfo(afotcs, testParser);
         }
+        mergeAfotcsWithParsedTcsPerAfo(afotcs, testParser);
+        return testParser.getParsedTestcases();
     }
 
-    private void parseTestCasesFromJavaSource(final Map<String, List<Testcase>> afotcs) {
+    private Map<String, Testcase> parseTestCasesFromJavaSource(final Map<String, List<Testcase>> afotcs) {
+        final AfoJavaTestParser testParser = new AfoJavaTestParser();
         for (final String rootdir : testRoot) {
             if (log.isInfoEnabled()) {
                 log.info(String.format("    parsing test source code in  %s...", rootdir));
             }
-            // TO DO refactor ctor out of loop and simplify if branches
-            // FIRST check if reusing the parser is ok and doe snot have any side effects
-            final AfoJavaTestParser testParser = new AfoJavaTestParser();
             testParser.parseDirectory(new File(rootdir));
-            // merge afotcs with parsed tcs per afo
-            mergeAfotcsWithParsedTcsPerAfo(afotcs, testParser);
         }
+        mergeAfotcsWithParsedTcsPerAfo(afotcs, testParser);
+        return testParser.getParsedTestcases();
     }
 
-    private void logResults(final Map<String, List<Testcase>> afotcs, final int tcs) {
+    private void logResults(final Map<String, List<Testcase>> afotcs, final Map<String, Testcase> tcsMap) {
         if (log.isInfoEnabled()) {
             log.info(
-                String.format("    test code parsed, found %d referenced afos and %d test cases", afotcs.size(), tcs));
+                String.format("    test code parsed, found %d referenced afos and %d test cases", afotcs.size(),
+                    tcsMap.size()));
         }
-        if (log.isDebugEnabled()) {
-            for (final Map.Entry<String, List<Testcase>> entry : afotcs.entrySet()) {
-                log.debug(String.format("      AFO %s", entry.getKey()));
-                for (final Testcase tc : entry.getValue()) {
-                    log.debug(String.format("        %s:%s", tc.getClazz(), tc.getMethod()));
-                }
+        for (final Map.Entry<String, List<Testcase>> entry : afotcs.entrySet()) {
+            debug(String.format("      AFO %s", entry.getKey()));
+            for (final Testcase tc : entry.getValue()) {
+                debug(String.format("        %s:%s", tc.getClazz(), tc.getMethod()));
             }
         }
     }
@@ -362,7 +400,6 @@ public class AfoReporter {
                 afotcs.put(afoid, entry.getValue());
             }
         }
-        testParser.resetMap();
     }
 
     /**
@@ -372,7 +409,8 @@ public class AfoReporter {
      * @param afos    list of requirements
      * @param results map of test results per afo
      */
-    private void createHTMLReport(final List<AfoData> afos, final Map<String, TestResult> results) {
+    private void createHTMLReport(final List<AfoData> afos, final Map<String, TestResult> results,
+        final List<TestResult> unreferencedTestresults) {
         log.info("  creating HTML report...");
         final File aforeport = checkTargetFolderNReportFile();
         try {
@@ -395,29 +433,35 @@ public class AfoReporter {
             // overview section
             body = body.replace("${ReportDate}",
                 ZonedDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy - HH:mm:ss")))
-                .replace("${AfoNum}", String.valueOf(afos.size()))
+                .replace("${ReporterVersion}", getReporterVersion())
+                .replace("${AfoNum}", stats.getSum() + " / " + (stats.getSum() + stats.deletedUnknown))
                 .replace("${TCAfoNum}", String.valueOf(stats.getValue("tcs")))
-                .replace("${TCNum}", String.valueOf(results.size()));
+                .replace("${TCNum}", String.valueOf(results.size()))
+                .replace("${unrefScenarios}", String.valueOf(unreferencedTestresults.size()));
             final String[] replaceTokens = {
-                "passed", "failed", "skipped", "error", "unknown"
+                "passed", "failed", "skipped", "error"
             };
             for (final String token : replaceTokens) {
-                body = body.replace("${" + token + "Afo}", String.valueOf(stats.getValue(token)));
+                body = body.replace("${" + token + "Afo}",
+                    stats.getValue(token) + " ( " +
+                        String.format("%.1f", stats.getPercentage(token) * 100) + "% )");
             }
+
+            body = body.replace("${unknownAfo}", (stats.unknown - stats.deletedUnknown) + " / " + stats.unknown);
 
             // ${Slices} for pie chart
             // based upon https://medium.com/hackernoon/a-simple-pie-chart-in-svg-dbdd653b6936
             final String slices = String.format(
-                "{ percent: %s, color: '#28a745' },\n" +
+                "{ percent: %s, color: '#30CC22' },\n" +
                     "  { percent: %s, color: 'yellow' },\n" +
                     "  { percent: %s, color: 'orangered' },\n" +
                     "  { percent: %s, color: 'darkred' },\n" +
-                    "  { percent: %s, color: '#ACB4BA' }\n",
+                    "  { percent: %s, color: '#BCC4CA' }\n",
                 stats.getPercentage("passed"),
                 stats.getPercentage("skipped"),
                 stats.getPercentage("failed"),
                 stats.getPercentage("error"),
-                stats.getPercentage("unknown"));
+                stats.getPercentage("realunknown"));
             // list of afos that have tests associated
             final String afoTestedListHTML = createHTMLAfoList(afos.stream()
                 .filter(afo -> afo.getResults() != null && !afo.getResults().isEmpty())
@@ -426,9 +470,21 @@ public class AfoReporter {
             final String afoNoTestsListHTML = createHTMLAfoList(afos.stream()
                 .filter(afo -> afo.getResults() == null || afo.getResults().isEmpty())
                 .collect(Collectors.toList()));
+
+            final String tcentry;
+            if (templatesFolder == null) {
+                tcentry = getUTF8Resource("/de/gematik/idp/tests/aforeport/tcentry.html");
+            } else {
+                tcentry = FileUtils
+                    .readFileToString(new File(templatesFolder + File.separator + "tcentry.html"),
+                        StandardCharsets.UTF_8);
+            }
+            final String unrefScenariosListHTML = createHTMLScenarioList(tcentry, unreferencedTestresults);
+
             body = body.replace("${Slices}", slices)
                 .replace("${AfosTested}", afoTestedListHTML)
-                .replace("${AfosUnTested}", afoNoTestsListHTML);
+                .replace("${AfosUnTested}", afoNoTestsListHTML)
+                .replace("${ScenariosUnreferenced}", unrefScenariosListHTML);
 
             FileUtils.writeStringToFile(aforeport, header + "\n" + body + "\n</html>", StandardCharsets.UTF_8);
             log.info("  HTML report created as " + aforeport.getAbsolutePath());
@@ -500,8 +556,15 @@ public class AfoReporter {
         for (final AfoData afo : afos) {
             final StringBuilder tclist = new StringBuilder();
             final String resultbar = createResultBarNTestCaseList(tcentry, afo, tclist);
-            afolist.append(afoentry.replace("${status}", afo.getStatus().toString().toLowerCase())
-                .replace("${AfoID}", afo.getId()).replace("${AfoTitle}", afo.getTitle())
+            String status = afo.getStatus().toString().toLowerCase();
+            if (afo.getAfoStatus() == AfoStatus.DELETED) {
+                status = "deleted";
+            }
+            afolist.append(afoentry.replace("${status}", status)
+                .replace("${AfoID}", afo.getIdAndVersion()).replace("${AfoTitle}", afo.getTitle())
+                .replace("${AfoPetStatus}", Optional.ofNullable(afo.getPetStatus()).orElse("notBinding"))
+                .replace("${AfoDescription}",
+                    HtmlUtils.htmlEscape(Optional.ofNullable(afo.getDescription()).orElse("")))
                 .replace("${Testresults}", tclist).replace("${AfoResultBar}", resultbar)
                 .replace("${AfoStatus}", afo.getAfoStatus().toString())
                 .replace("${AfoHasRef}", afo.getRefName() == null ? HIDDEN : "")
@@ -520,11 +583,15 @@ public class AfoReporter {
         final String resultbar;
         if (afo.getResults() != null && !afo.getResults().isEmpty()) {
             final StringBuilder bardata = new StringBuilder();
-            for (final TestResult tr : afo.getResults()) {
-                tclist.append(tcentry.replace("${TCStatus}", tr.getStatus().toString().toLowerCase())
-                    .replace("${TCMethod}", tr.getMethod()).replace("${TCClass}", tr.getClazz()));
-                bardata.append(tr.getStatus().toString().charAt(0));
-            }
+            afo.getResults().stream()
+                .sorted(Comparator.comparing(Testcase::getClazz))
+                .forEach(tr -> {
+                    tclist.append(tcentry.replace("${TCStatus}", tr.getStatus().toString().toLowerCase())
+                        .replace("${TCPath}", tr.getPath())
+                        .replace("${TCMethod}", tr.getScenarioName())
+                        .replace("${TCClass}", tr.getFeatureName()));
+                    bardata.append(tr.getStatus().toString().charAt(0));
+                });
             resultbar = "<div class=\"resultbar\" data-value=\"" + bardata.toString() + "\"></div> "
                 + "<span class=\"right small text-muted\">("
                 + Objects.requireNonNullElseGet(afo.getResults(),
@@ -536,6 +603,18 @@ public class AfoReporter {
         }
         return resultbar;
     }
+
+    private String createHTMLScenarioList(final String tcentry, final List<TestResult> unreferencedTestresults) {
+        final StringBuilder sb = new StringBuilder();
+        unreferencedTestresults.stream()
+            .sorted(Comparator.comparing(Testcase::getClazz))
+            .forEach(tr -> sb.append(tcentry.replace("${TCStatus}", tr.getStatus().toString().toLowerCase())
+                .replace("${TCPath}", tr.getPath())
+                .replace("${TCMethod}", tr.getScenarioName())
+                .replace("${TCClass}", tr.getFeatureName())));
+        return sb.toString();
+    }
+
 
     /**
      * iterates through all test cases and if test result exists, add it to the given afo. At the end determines the
@@ -594,6 +673,8 @@ public class AfoReporter {
         int failed = 0;
         int error = 0;
         int unknown = 0;
+        int deletedUnknown = 0;
+        int realunknown;
         int tcs = 0;
 
         AfoStatistics(final List<AfoData> afos) {
@@ -616,12 +697,16 @@ public class AfoReporter {
                         default:
                         case UNKNOWN:
                             unknown++;
+                            if (afo.getAfoStatus() == AfoStatus.DELETED) {
+                                deletedUnknown++;
+                            }
                             break;
                     }
                     if (afo.getResults() != null) {
                         tcs += afo.getResults().size();
                     }
                 });
+            realunknown = unknown - deletedUnknown;
         }
 
         /**
@@ -630,7 +715,7 @@ public class AfoReporter {
          * @return sum of all results
          */
         int getSum() {
-            return passed + skipped + failed + error + unknown;
+            return passed + skipped + failed + error + unknown - deletedUnknown;
         }
 
         /**
@@ -655,6 +740,16 @@ public class AfoReporter {
          */
         double getPercentage(final String type) throws NoSuchFieldException, IllegalAccessException {
             return ((double) getValue(type)) / ((double) getSum());
+        }
+    }
+
+    public void debug(final String msg) {
+        if (dump) {
+            if (log.isDebugEnabled()) {
+                log.debug(msg);
+            } else {
+                log.info("[DEBUG] " + msg);
+            }
         }
     }
 }

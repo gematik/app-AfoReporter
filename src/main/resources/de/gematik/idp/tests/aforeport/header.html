@@ -9091,6 +9091,12 @@
   <style>
       body {
           padding-top: 5rem;
+          background: #f7f8f3;
+      }
+
+      .full-width-container {
+          width: 90%;
+          margin: auto;
       }
 
       .starter-template {
@@ -9099,12 +9105,12 @@
       }
 
       svg {
-          height: 200px;
+          height: 300px;
       / / the contents will scale to fit because of viewBox
       }
 
       .passed, .barP {
-          background-color: #28a745;
+          background-color: #30CC22;
       }
 
       .skipped, .barS {
@@ -9115,12 +9121,16 @@
           background-color: orangered;
       }
 
-      .error, .barE {
+      .error, .barE, .deleted {
           background-color: darkred;
       }
 
       .unknown, .barU {
-          background-color: #ACB4BA;
+          background-color: #BCC4CA;
+      }
+
+      .total {
+          background-color: #fff;
       }
 
       .afotableheader {
@@ -9141,16 +9151,15 @@
 
       .afodeleted {
           background-color: rgba(220, 53, 69, 0.3) !important;
-          text-decoration: line-through;
-
+          color: darkred !important;
       }
 
       .afoseparator {
           background-color: lightgray !important;
           height: 4rem;
-          line-height: 4rem;
-          border: 1px solid gray;
-          margin-top: 2rem;
+          line-height: 3rem;
+          border: 1px solid gray !important;
+          margin-top: 0.5rem;
       }
 
       .square30px {
@@ -9161,33 +9170,34 @@
       }
 
       .section {
-          border: 1px lightgray solid;
+          border: 1px #e7e8e3 solid;
           padding: 2rem;
           border-radius: 1rem;
+          background: #f1f3e8;
       }
 
       .h1logo {
           width: 7rem;
       }
 
-      #afos > div:nth-child(odd), #afos > span > div:nth-child(odd) {
-          background-color: white;
-      }
-
-      #afos > div:nth-child(even), #afos > span > div:nth-child(even) {
-          background-color: palegoldenrod;
-      }
-
       #afos > .row, #afos > span > .row {
           display: block;
+          border-bottom: 1px solid #ddd;
+          padding-top: 0.5rem;
+          min-height: 1rem;
+          background: white;
       }
 
-      #afos > .row div.aforow, #afos > span > .row div.aforow {
+      #afos > .row div.aforow, #afos > span > .row div.aforow, #unrefScenarios > .row.tcentry {
           display: flex;
       }
 
       #afos a {
           color: #212529;
+      }
+
+      #afos .petstatus-notBinding > a {
+          color: coral;
       }
 
       .afocounts > div {
@@ -9196,7 +9206,7 @@
       }
 
       .testresults {
-          padding: 1rem 1rem 2rem 1rem;
+          padding: 0.5rem 1rem 0.5rem 3rem;
           border-bottom: 1px solid palegoldenrod;
           border-right: 1px solid palegoldenrod;
           border-left: 1px solid palegoldenrod;
@@ -9214,8 +9224,14 @@
           vertical-align: middle;
       }
 
-      .whiteborderbottom {
-          border-bottom: 1px solid whitesmoke;
+      .tcled {
+          max-width: 40px;
+      }
+
+      .aforeference a {
+          font-size: 0.8rem;
+          font-style: italic;
+          color: #aaa !important;
       }
 
       .resultbar {
@@ -9227,6 +9243,14 @@
           line-height: 15px;
           margin: 2px 0;
           box-shadow: 2px 2px lightgrey;
+      }
+
+      .feature-name {
+          font-weight: 600;
+      }
+
+      .scenario-name {
+          font-weight: 200;
       }
 
       .bar {

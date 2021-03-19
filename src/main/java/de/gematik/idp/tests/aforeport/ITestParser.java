@@ -22,6 +22,4 @@ import java.util.Map;
 public interface ITestParser {
 
     Map<String, List<Testcase>> getParsedTestcasesPerAfo();
-
-    void resetMap();
 }
