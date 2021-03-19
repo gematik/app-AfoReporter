@@ -7,7 +7,7 @@
       "description": "Given I initialize scenario from discovery document endpoint",
       "duration": 18,
       "startTime": "2021-03-02T17:10:33.491903200+01:00[Europe/Berlin]",
-      "result": "SUCCESS",
+      "result": "ERROR",
       "precondition": false,
       "level": 0,
       "children": [
@@ -323,5 +323,9 @@
   "isManualTestingUpToDate": false,
   "manual": false,
   "testSource": "Cucumber",
-  "result": "SUCCESS"
+  "result": "ERROR",
+  "exception": {
+    "message": "test failure message",
+    "errorType": "Assertion"
+  }
 }

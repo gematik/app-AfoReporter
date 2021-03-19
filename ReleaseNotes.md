@@ -1,3 +1,6 @@
+# Release 1.0.14
+increased code coverage for mvn central release
+
 # Release 1.0.13
 New Report Layout, LooknFeel
 Afos now have more information (description, binding status)

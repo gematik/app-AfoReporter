@@ -84,9 +84,7 @@ public class AfoReporter {
      * list of folders to parse for Serenity test result files.
      */
     @Parameter(names = {"-bdd", "-b"})
-    List<String> bdd = Collections.singletonList(
-        Paths.get("..", FOLDER_IDP_GLOBAL, "idp-testsuite", FOLDER_TARGET, "site", "serenity").toAbsolutePath()
-            .toString());
+    List<String> bdd;
     /**
      * name of the file containing the requirements.
      */
@@ -290,7 +288,7 @@ public class AfoReporter {
                 final List<String> folders;
                 final String logmsg;
 
-                if (bdd.isEmpty()) {
+                if (bdd == null || bdd.isEmpty()) {
                     resultParser = new AfoJUnitTestResultParser();
                     folders = resultRoot;
                     logmsg = "    parsing test rsults in  %s...";
@@ -335,7 +333,7 @@ public class AfoReporter {
             final Map<String, Testcase> tcsMap;
             try {
 
-                if (bdd.isEmpty()) {
+                if (bdd == null || bdd.isEmpty()) {
                     tcsMap = parseTestCasesFromJavaSource(afotcs);
                 } else {
                     tcsMap = parseScenariosFromCucumberSource(afotcs);
@@ -609,9 +607,9 @@ public class AfoReporter {
         unreferencedTestresults.stream()
             .sorted(Comparator.comparing(Testcase::getClazz))
             .forEach(tr -> sb.append(tcentry.replace("${TCStatus}", tr.getStatus().toString().toLowerCase())
-                .replace("${TCPath}", tr.getPath())
-                .replace("${TCMethod}", tr.getScenarioName())
-                .replace("${TCClass}", tr.getFeatureName())));
+                .replace("${TCPath}", Optional.ofNullable(tr.getPath()).orElse(""))
+                .replace("${TCMethod}", Optional.ofNullable(tr.getScenarioName()).orElse("UNDEFINED"))
+                .replace("${TCClass}", Optional.ofNullable(tr.getFeatureName()).orElse("UNDEFINED"))));
         return sb.toString();
     }
 

@@ -407,6 +407,7 @@ class TestAfoReporter {
     @Test
     public void testBDDHTMLReportGeneratorOK() {
         final AfoReporter reporter = new AfoReporter();
+        reporter.dump = true;
         reporter.bdd = Collections
             .singletonList(Paths.get("src", "test", "resources", "bdd").toFile().getAbsolutePath());
         reporter.afofile = Paths.get("src", "test", "resources", "requirements.json").toFile().getAbsolutePath();
@@ -417,9 +418,23 @@ class TestAfoReporter {
     }
 
     @Test
+    public void testJavaCodeHTMLReportGeneratorOK() {
+        final AfoReporter reporter = new AfoReporter();
+        reporter.dump = true;
+        reporter.testRoot = Collections
+            .singletonList(Paths.get("src", "test", "java").toFile().getAbsolutePath());
+        reporter.afofile = Paths.get("src", "test", "resources", "requirements.json").toFile().getAbsolutePath();
+
+        reporter.run();
+
+        assertThat(Paths.get("target", "site", "serenity", "aforeport.html").toFile()).exists();
+    }
+
+    @Test
     public void testJUnitHTMLReportGeneratorOK() {
         final AfoReporter reporter = new AfoReporter();
-        reporter.bdd = Collections
+        reporter.dump = true;
+        reporter.resultRoot = Collections
             .singletonList(Paths.get("src", "test", "resources", "junit").toFile().getAbsolutePath());
         reporter.afofile = Paths.get("src", "test", "resources", "requirements.json").toFile().getAbsolutePath();
 
