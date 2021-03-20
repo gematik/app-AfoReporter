@@ -6,13 +6,13 @@ Der AfoReporter ermöglicht es die Überdeckung von Testergebnissen mit Anforder
 
 ## Kommandozeilenparameter
 
-* -bdd (-b) definiert ein Basisverzeichnis, unterhalb welchem alle Serenity Testergebnis JSON Dateien geparsed werden.
-  **(default: LEER!)**
+* -bdd (-b) Flag ob Cucumber und Serenity oder JUNIT geparsed werden soll.
+  **(default: false)**
 * -testroot (-tr) definiert ein Basisverzeichnis, unterhalb welchem alle Test Methoden und Cucumber feature Dateien
   geparsed werden.
   **(default: "../idp-global/idp-server/src/test")**
-* -resultroot (-tr) definiert ein Basisverzeichnis, unterhalb welchem alle JUNIT Testergebnis XML Dateien geparsed
-  werden.
+* -resultroot (-rr) definiert ein Basisverzeichnis, unterhalb welchem alle JUNIT Testergebnis XML oder Serenity JSON
+  Dateien geparsed werden.
   **(default: "../idp-global/idp-server/target/surefire-reports")**
 * -file (-f) Dateinamen (JSON Datei) aus der die Anforderungen gelesen werden sollen.
   **(default: requirements.json)**

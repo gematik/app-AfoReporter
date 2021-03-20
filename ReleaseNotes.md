@@ -1,3 +1,6 @@
+# Release 1.1.1
+Fixing folder cmd line parameters 
+
 # Release 1.1.0
 Complete self rewrite of Cucumber parsing as io cucumber parser lib is complete mess
 

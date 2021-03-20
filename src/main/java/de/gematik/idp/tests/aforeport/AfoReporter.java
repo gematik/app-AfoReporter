@@ -59,13 +59,12 @@ import org.springframework.web.util.HtmlUtils;
  *     <li>-tr: root folder for test source code, to parse for test methods and cucumber scenarios.
  *              Can be used multiple times for multiple folders</li>
  *     <li>-rr: root folder for test result files, to parse the results from. Can be used multiple times for multiple folders</li>
- *     <li>-bdd: root folder for Serenity test result files, to parse the results from. Can be used multiple times for multiple folders</li>
+ *     <li>-bdd: flag whether to work on cucumber or on junit</li>
  *     <li>-tpl: folder containing html template files to be used when generating the report</li>
  *     <li>-d: dump debug logs to console</li>
  *     <li>-o: file to save HTML report to</li>
  * </ul>
  * <p>
- * Presence of bdd argument overrules tr or rr parameters (you can only parse Serenity OR Junit)
  *
  * <p><b>Class dependencies</b></p>
  *
@@ -87,7 +86,7 @@ public class AfoReporter {
      * list of folders to parse for Serenity test result files.
      */
     @Parameter(names = {"-bdd", "-b"})
-    List<String> bdd;
+    boolean bdd;
     /**
      * name of the file containing the requirements.
      */
@@ -296,14 +295,14 @@ public class AfoReporter {
                 final List<String> folders;
                 final String logmsg;
 
-                if (bdd == null || bdd.isEmpty()) {
-                    resultParser = new AfoJUnitTestResultParser();
-                    folders = resultRoot;
-                    logmsg = "    parsing test results in  %s...";
-                } else {
+                if (bdd) {
                     resultParser = new AfoSerenityTestResultParser();
                     folders = resultRoot;
                     logmsg = "    parsing serenity results in  %s...";
+                } else {
+                    resultParser = new AfoJUnitTestResultParser();
+                    folders = resultRoot;
+                    logmsg = "    parsing test results in  %s...";
                 }
                 for (final String rootdir : folders) {
                     if (log.isInfoEnabled()) {
@@ -340,10 +339,10 @@ public class AfoReporter {
         parseTestcases = new Thread(() -> {
             try {
 
-                if (bdd == null || bdd.isEmpty()) {
-                    parseTestCasesFromJavaSource(afotcs);
-                } else {
+                if (bdd) {
                     parseScenariosFromCucumberSource(afotcs);
+                } else {
+                    parseTestCasesFromJavaSource(afotcs);
                 }
                 logResults(afotcs, testParser.getParsedTestcases());
 
@@ -358,7 +357,7 @@ public class AfoReporter {
 
     private void parseScenariosFromCucumberSource(final Map<String, List<Testcase>> afotcs) {
         testParser = new AfoCucumberTestParser();
-        for (final String rootdir : bdd) {
+        for (final String rootdir : testRoot) {
             if (log.isInfoEnabled()) {
                 log.info(String.format("    parsing cucumber scenarios in  %s...", rootdir));
             }

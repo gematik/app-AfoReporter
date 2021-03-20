@@ -408,8 +408,10 @@ class TestAfoReporter {
     public void testBDDHTMLReportGeneratorOK() {
         final AfoReporter reporter = new AfoReporter();
         reporter.dump = true;
-        reporter.bdd = Collections
+        reporter.bdd = true;
+        reporter.testRoot = Collections
             .singletonList(Paths.get("src", "test", "resources", "bdd").toFile().getAbsolutePath());
+        reporter.resultRoot = reporter.testRoot;
         reporter.afofile = Paths.get("src", "test", "resources", "requirements.json").toFile().getAbsolutePath();
 
         reporter.run();

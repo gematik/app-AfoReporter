@@ -7,7 +7,7 @@
   <groupId>de.gematik.idp.aforeporter</groupId>
   <artifactId>aforeporter</artifactId>
   <packaging>jar</packaging>
-  <version>1.1.0</version>
+  <version>1.1.1</version>
   <name>Gematik Afo Reporter</name>
   <description>
     Mit Hilfe des Afo Reporters können, basierend auf in JSON Dateien hinterlegten Anforderungen,
