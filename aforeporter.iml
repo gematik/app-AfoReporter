@@ -22,28 +22,18 @@
     <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-annotations:2.11.2" level="project" />
     <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-core:2.11.2" level="project" />
     <orderEntry type="library" name="Maven: org.json:json:20201115" level="project" />
-    <orderEntry type="library" name="Maven: io.cucumber:cucumber-core:4.8.0" level="project" />
-    <orderEntry type="library" name="Maven: io.cucumber:tag-expressions:1.1.1" level="project" />
-    <orderEntry type="library" name="Maven: io.cucumber:cucumber-expressions:7.0.2" level="project" />
-    <orderEntry type="library" name="Maven: io.cucumber:datatable:1.1.14" level="project" />
-    <orderEntry type="library" name="Maven: io.cucumber:datatable-dependencies:1.1.14" level="project" />
-    <orderEntry type="library" name="Maven: org.apiguardian:apiguardian-api:1.1.0" level="project" />
-    <orderEntry type="library" name="Maven: io.cucumber:cucumber-java:5.5.0" level="project" />
-    <orderEntry type="library" name="Maven: io.cucumber:cucumber-gherkin-vintage:5.5.0" level="project" />
-    <orderEntry type="library" name="Maven: io.cucumber:cucumber-gherkin:5.5.0" level="project" />
-    <orderEntry type="library" name="Maven: io.cucumber:cucumber-plugin:5.5.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.junit.jupiter:junit-jupiter-params:5.4.2" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.apiguardian:apiguardian-api:1.0.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.junit.jupiter:junit-jupiter-api:5.4.2" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.opentest4j:opentest4j:1.1.1" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.junit.platform:junit-platform-commons:1.4.2" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.junit.jupiter:junit-jupiter-engine:5.4.2" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.junit.platform:junit-platform-engine:1.4.2" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.assertj:assertj-core:3.18.1" level="project" />
-    <orderEntry type="library" name="Maven: io.cucumber:gherkin:5.1.0" level="project" />
-    <orderEntry type="library" name="Maven: io.cucumber:gherkin-jvm-deps:1.0.4" level="project" />
     <orderEntry type="library" name="Maven: org.springframework:spring-web:5.2.9.RELEASE" level="project" />
     <orderEntry type="library" name="Maven: org.springframework:spring-beans:5.2.9.RELEASE" level="project" />
     <orderEntry type="library" name="Maven: org.springframework:spring-core:5.2.9.RELEASE" level="project" />
     <orderEntry type="library" name="Maven: org.springframework:spring-jcl:5.2.9.RELEASE" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.commons:commons-lang3:3.11" level="project" />
   </component>
 </module>

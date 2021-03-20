@@ -115,7 +115,7 @@ public class AfoReporter {
     @Parameter(names = {"-dump", "-d"})
     boolean dump;
     @Parameter(names = {"-out", "-o"})
-    String reportFile = Paths.get("target", "site", "serenity", "aforeport.html").toAbsolutePath().toString();
+    String reportFile = Paths.get(FOLDER_TARGET, "site", "serenity", "aforeport.html").toAbsolutePath().toString();
 
 
     /**
@@ -123,6 +123,7 @@ public class AfoReporter {
      * anything happened.
      */
     private Exception threadException = null;
+    private ITestParser testParser;
 
     public static String getReporterVersion() {
         String version = null;
@@ -218,13 +219,15 @@ public class AfoReporter {
             .filter(afo -> !"deleted".equals(afo.getAfoStatus().toString()))
             .forEach(afo -> determineRequirementResult(afo, afotcs.get(afo.getId()), results));
 
-        final List<TestResult> unreferencedTestresults = new ArrayList<>(results.values());
-        afotcs.forEach((afoid, tcs) -> tcs.stream()
-            .filter(tc -> unreferencedTestresults.stream()
-                .anyMatch(unreftc -> unreftc.equals(tc)))
-            .forEach(unreferencedTestresults::remove));
-
-        createHTMLReport(afos, results, unreferencedTestresults);
+        final List<TestResult> unreferencedTestResults = testParser.getTestcasesWithoutAfo().values().stream()
+            .map(tc -> {
+                if (!results.containsKey(tc.getClazz() + ":" + tc.getMethod())) {
+                    return TestResult.fromTestcase(tc);
+                } else {
+                    return results.get(tc.getClazz() + ":" + tc.getMethod());
+                }
+            }).collect(Collectors.toList());
+        createHTMLReport(afos, results, unreferencedTestResults);
     }
 
     /**
@@ -296,7 +299,7 @@ public class AfoReporter {
                 if (bdd == null || bdd.isEmpty()) {
                     resultParser = new AfoJUnitTestResultParser();
                     folders = resultRoot;
-                    logmsg = "    parsing test rsults in  %s...";
+                    logmsg = "    parsing test results in  %s...";
                 } else {
                     resultParser = new AfoSerenityTestResultParser();
                     folders = resultRoot;
@@ -335,15 +338,14 @@ public class AfoReporter {
     private Thread initThreadToParseTestcases(final Map<String, List<Testcase>> afotcs) {
         final Thread parseTestcases;
         parseTestcases = new Thread(() -> {
-            final Map<String, Testcase> tcsMap;
             try {
 
                 if (bdd == null || bdd.isEmpty()) {
-                    tcsMap = parseTestCasesFromJavaSource(afotcs);
+                    parseTestCasesFromJavaSource(afotcs);
                 } else {
-                    tcsMap = parseScenariosFromCucumberSource(afotcs);
+                    parseScenariosFromCucumberSource(afotcs);
                 }
-                logResults(afotcs, tcsMap);
+                logResults(afotcs, testParser.getParsedTestcases());
 
 
             } catch (final Exception e) {
@@ -354,28 +356,26 @@ public class AfoReporter {
         return parseTestcases;
     }
 
-    private Map<String, Testcase> parseScenariosFromCucumberSource(final Map<String, List<Testcase>> afotcs) {
-        final AfoCucumberTestParser testParser = new AfoCucumberTestParser();
+    private void parseScenariosFromCucumberSource(final Map<String, List<Testcase>> afotcs) {
+        testParser = new AfoCucumberTestParser();
         for (final String rootdir : bdd) {
             if (log.isInfoEnabled()) {
                 log.info(String.format("    parsing cucumber scenarios in  %s...", rootdir));
             }
             testParser.parseDirectory(new File(rootdir));
         }
-        mergeAfotcsWithParsedTcsPerAfo(afotcs, testParser);
-        return testParser.getParsedTestcases();
+        afotcs.putAll(testParser.getParsedTestcasesPerAfo());
     }
 
-    private Map<String, Testcase> parseTestCasesFromJavaSource(final Map<String, List<Testcase>> afotcs) {
-        final AfoJavaTestParser testParser = new AfoJavaTestParser();
+    private void parseTestCasesFromJavaSource(final Map<String, List<Testcase>> afotcs) {
+        testParser = new AfoJavaTestParser();
         for (final String rootdir : testRoot) {
             if (log.isInfoEnabled()) {
                 log.info(String.format("    parsing test source code in  %s...", rootdir));
             }
             testParser.parseDirectory(new File(rootdir));
         }
-        mergeAfotcsWithParsedTcsPerAfo(afotcs, testParser);
-        return testParser.getParsedTestcases();
+        afotcs.putAll(testParser.getParsedTestcasesPerAfo());
     }
 
     private void logResults(final Map<String, List<Testcase>> afotcs, final Map<String, Testcase> tcsMap) {
@@ -392,25 +392,13 @@ public class AfoReporter {
         }
     }
 
-    private void mergeAfotcsWithParsedTcsPerAfo(final Map<String, List<Testcase>> afotcs,
-        final ITestParser testParser) {
-        final Map<String, List<Testcase>> parsedMap = testParser.getParsedTestcasesPerAfo();
-        for (final Map.Entry<String, List<Testcase>> entry : parsedMap.entrySet()) {
-            final String afoid = entry.getKey();
-            if (afotcs.containsKey(afoid)) {
-                afotcs.get(afoid).addAll(entry.getValue());
-            } else {
-                afotcs.put(afoid, entry.getValue());
-            }
-        }
-    }
-
     /**
      * creates html with header + overview section + list of afos (requirements) with each added a collapsable test case
      * list.
      *
-     * @param afos    list of requirements
-     * @param results map of test results per afo
+     * @param afos                    list of requirements
+     * @param results                 map of test results per afo
+     * @param unreferencedTestresults list of testcases (as result) that had no afo reference
      */
     private void createHTMLReport(final List<AfoData> afos, final Map<String, TestResult> results,
         final List<TestResult> unreferencedTestresults) {

@@ -83,8 +83,8 @@ public class AfoJUnitTestResultParser implements ITestResultParser {
 
     private TestResult parseTestCase(final Element tc) {
         final TestResult tr = new TestResult();
-        tr.clazz = tc.getAttribute("classname");
-        tr.method = tc.getAttribute("name");
+        tr.setClazz(tc.getAttribute("classname"));
+        tr.setMethod(tc.getAttribute("name"));
         final NodeList details = tc.getChildNodes();
         if (details.getLength() == 0) {
             tr.status = Result.PASSED;

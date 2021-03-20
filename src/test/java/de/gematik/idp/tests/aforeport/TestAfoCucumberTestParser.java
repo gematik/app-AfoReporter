@@ -16,7 +16,9 @@ public class TestAfoCucumberTestParser {
         parser.parseDirectory(Paths.get("src", "test", "resources", "bdd").toFile());
         final Map<String, List<Testcase>> tcs = parser.getParsedTestcasesPerAfo();
 
-        assertThat(tcs).containsOnlyKeys("A_19874", "A_20688", "A_20457", "A_20623", "A_20668", "A_20614", "A_20591");
+        assertThat(tcs).containsOnlyKeys("A_19874", "A_20688", "A_20457", "A_20623", "A_20668", "A_20614", "A_20591",
+            "A_20313", "A_20731", "A_20314", "A_20952", "A_20315", "A_20327", "A_20625", "A_21321",
+            "A_21320", "A_20463", "A_20464", "A_20310", "A_20321");
         assertThat(tcs.get("A_20623")).hasSize(1);
         assertThat(tcs.get("A_20623").get(0).getMethod())
             .isEqualTo("disc---discovery-dokument-muss-signiert-sein");

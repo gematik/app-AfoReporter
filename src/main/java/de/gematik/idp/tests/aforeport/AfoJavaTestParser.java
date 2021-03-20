@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -43,7 +44,9 @@ public class AfoJavaTestParser implements ITestParser {
 
     private final Map<String, List<Testcase>> parsedTestcasesPerAfo = new HashMap<>();
     private final Map<String, Testcase> parsedTestcases = new HashMap<>();
+    private final Map<String, Testcase> unreferencedTestcases = new HashMap<>();
 
+    @Override
     public void parseDirectory(final File rootDir) {
         if (rootDir == null) {
             log.warn("Invalid test source NULL root dir");
@@ -73,6 +76,11 @@ public class AfoJavaTestParser implements ITestParser {
         } catch (final IOException ioex) {
             throw new AfoReporterException("Unable to parse " + f.getAbsolutePath(), ioex);
         }
+    }
+
+    @Override
+    public Map<String, Testcase> getTestcasesWithoutAfo() {
+        return unreferencedTestcases;
     }
 
     /**
@@ -132,26 +140,42 @@ public class AfoJavaTestParser implements ITestParser {
 
         private void visitMethodAndAddAfoToTestcaseListIfPresent(final MethodDeclaration n) {
             final String methodname = n.getNameAsString();
-            n.getAnnotations().stream()
-                .filter(afo -> "Afo".equals(afo.getNameAsString()))
-                .forEach(afo -> addTestCaseToAfo(n, methodname, afo));
-        }
-
-        private void addTestCaseToAfo(final MethodDeclaration n, final String methodname, final AnnotationExpr afo) {
-            final String clazzname = getFullyQualifiedName((ClassOrInterfaceDeclaration) n.getParentNode().orElseThrow(
-                () -> new AfoReporterException((
-                    String.format("Internal Error. Test Method has no parent node. Method name is %s!", methodname)))));
-            if (afo instanceof SingleMemberAnnotationExpr) {
-                final String id = ((SingleMemberAnnotationExpr) afo).getMemberValue().asStringLiteralExpr().asString();
-                parser.parsedTestcasesPerAfo.computeIfAbsent(id, k -> new ArrayList<>());
+            final boolean test = n.getAnnotations().stream()
+                .filter(ano -> "Test".equals(ano.getNameAsString()))
+                .map(ano -> true)
+                .findAny()
+                .orElse(false);
+            if (test) {
+                final String clazzname = getFullyQualifiedName(
+                    (ClassOrInterfaceDeclaration) n.getParentNode().orElseThrow(
+                        () -> new AfoReporterException((
+                            String.format("Internal Error. Test Method has no parent node. Method name is %s!",
+                                methodname)))));
                 final Testcase tc = new Testcase();
                 tc.setClazz(clazzname);
                 tc.setMethod(methodname);
-                parser.parsedTestcases.putIfAbsent(id, tc);
+                parser.parsedTestcases.putIfAbsent(tc.getClazz() + ":" + tc.getMethod(), tc);
+                final AtomicReference<Boolean> ref = new AtomicReference<>(false);
+                n.getAnnotations().stream()
+                    .filter(afo -> "Afo".equals(afo.getNameAsString()))
+                    .forEach(afo -> {
+                        ref.set(true);
+                        addTestCaseToAfo(tc, afo);
+                    });
+                if (!ref.get().booleanValue()) {
+                    parser.unreferencedTestcases.putIfAbsent(tc.getClazz() + ":" + tc.getMethod(), tc);
+                }
+            }
+        }
+
+        private void addTestCaseToAfo(final Testcase tc, final AnnotationExpr afo) {
+            if (afo instanceof SingleMemberAnnotationExpr) {
+                final String id = ((SingleMemberAnnotationExpr) afo).getMemberValue().asStringLiteralExpr().asString();
+                parser.parsedTestcasesPerAfo.computeIfAbsent(id, k -> new ArrayList<>());
                 parser.parsedTestcasesPerAfo.get(id).add(tc);
             } else {
                 throw new AfoReporterException(
-                    "Unsupported Afo Annotation detected in " + clazzname + ":" + methodname + "!");
+                    "Unsupported Afo Annotation detected in " + tc.getClazz() + ":" + tc.getMethod() + "!");
             }
         }
     }

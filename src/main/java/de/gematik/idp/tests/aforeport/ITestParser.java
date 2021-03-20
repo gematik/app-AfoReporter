@@ -16,10 +16,17 @@
 
 package de.gematik.idp.tests.aforeport;
 
+import java.io.File;
 import java.util.List;
 import java.util.Map;
 
 public interface ITestParser {
 
+    void parseDirectory(final File rootDir);
+
     Map<String, List<Testcase>> getParsedTestcasesPerAfo();
+
+    Map<String, Testcase> getParsedTestcases();
+
+    Map<String, Testcase> getTestcasesWithoutAfo();
 }

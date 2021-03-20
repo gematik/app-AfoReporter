@@ -22,11 +22,11 @@ import lombok.Data;
 @Data
 public class Testcase {
 
-    String clazz;
-    String method;
-    String featureName;
-    String scenarioName;
-    String path;
+    private String clazz;
+    private String method;
+    private String featureName;
+    private String scenarioName;
+    private String path;
 
     @Override
     public boolean equals(final Object o) {

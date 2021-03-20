@@ -16,21 +16,15 @@
 
 package de.gematik.idp.tests.aforeport;
 
-import cucumber.runtime.io.MultiLoader;
-import cucumber.runtime.model.CucumberFeature;
-import cucumber.runtime.model.FeatureLoader;
-import gherkin.ast.Background;
-import gherkin.ast.Scenario;
-import gherkin.ast.ScenarioDefinition;
-import gherkin.ast.ScenarioOutline;
-import gherkin.ast.Tag;
+import de.gematik.gherkin.FeatureParser;
+import de.gematik.gherkin.model.Feature;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -38,10 +32,12 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class AfoCucumberTestParser implements ITestParser {
 
-    private static final String AFO_TOKEN = "@Afo:";
+    private static final String AFO_TOKEN = "@Afo";
     private final Map<String, List<Testcase>> parsedTestcasesPerAfo = new HashMap<>();
     private final Map<String, Testcase> parsedTestcases = new HashMap<>();
+    private final Map<String, Testcase> unreferencedTestcases = new HashMap<>();
 
+    @Override
     public void parseDirectory(final File rootDir) {
         if (rootDir == null) {
             log.warn("Invalid test source NULL root dir");
@@ -62,41 +58,32 @@ public class AfoCucumberTestParser implements ITestParser {
         }
     }
 
-    private List<Tag> getTags(final ScenarioDefinition sd) {
-        if (sd instanceof Scenario) {
-            return ((Scenario) sd).getTags();
-        } else if (sd instanceof ScenarioOutline) {
-            return ((ScenarioOutline) sd).getTags();
-        } else {
-            return List.of();
-        }
-    }
-
     private void inspectFile(final File f) {
-        final FeatureLoader fl = new FeatureLoader(new MultiLoader(null));
-        final List<CucumberFeature> features = fl.load(Collections.singletonList(f.toURI()));
-
-        final CucumberFeature cucFeature = features.get(0);
-
-        cucFeature.getGherkinFeature().getFeature().getChildren().stream()
-            .filter(ch -> !(ch instanceof Background))
-            .forEach(ch -> getTags(ch).stream()
-                .filter(tag -> tag.getName().startsWith(AFO_TOKEN))
-                .forEach(afotag -> {
-                    final String afoid = afotag.getName().substring(AFO_TOKEN.length());
-                    parsedTestcasesPerAfo.computeIfAbsent(afoid, k -> new ArrayList<>());
-
+        final Feature feature = new FeatureParser().parseFeatureFile(f);
+        feature.getScenarios()
+            .forEach(ch -> {
                     final Testcase tc = new Testcase();
-                    tc.setFeatureName(cucFeature.getName());
+                    tc.setFeatureName(feature.getName());
                     tc.setScenarioName(ch.getName());
-                    tc.setClazz(convertToId(cucFeature.getName()));
+                    tc.setClazz(convertToId(feature.getName()));
                     tc.setMethod(convertToId(ch.getName()));
-                    tc.setPath(f.getAbsolutePath());
-
-                    parsedTestcases.putIfAbsent(tc.getClazz() + ":" + tc.getMethod(), tc);
-                    parsedTestcasesPerAfo.get(afoid).add(tc);
-
-                }));
+                    tc.setPath(feature.getFileName());
+                parsedTestcases.putIfAbsent(tc.getClazz() + ":" + tc.getMethod(), tc);
+                    final AtomicReference<Boolean> ref = new AtomicReference<>(false);
+                    ch.getTags().stream()
+                        .filter(tag -> tag.getName().equals(AFO_TOKEN))
+                        .forEach(afotag -> {
+                            final String afoid = afotag.getParameter();
+                            parsedTestcasesPerAfo.computeIfAbsent(afoid, k -> new ArrayList<>());
+                            parsedTestcasesPerAfo.get(afoid).add(tc);
+                            ref.set(true);
+                        });
+                    if (!ref.get().booleanValue()) {
+                        unreferencedTestcases.putIfAbsent(tc.getClazz() + ":" + tc.getMethod(), tc);
+                    }
+                }
+            );
+        log.info("      Found " + feature.getScenarios().size() + " scenarios in " + f.getAbsolutePath());
     }
 
     private String convertToId(String name) {
@@ -105,6 +92,11 @@ public class AfoCucumberTestParser implements ITestParser {
             name = name.replace(chars.charAt(i), '-');
         }
         return name.toLowerCase();
+    }
+
+    @Override
+    public Map<String, Testcase> getTestcasesWithoutAfo() {
+        return unreferencedTestcases;
     }
 }
 
