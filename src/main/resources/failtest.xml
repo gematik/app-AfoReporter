@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<testsuites errors="0" failures="2" skipped="0" tests="2">
+    <testsuite errors="0" failures="2" hostname="me.gerph.org" id="1" name="xml-lint" skipped="0" tests="2" timestamp="2019-01-18T08:07:00">
+        <properties>
+            <property name="CI_BRANCH" value="" />
+            <property name="CI_BRANCH_VERSION" value="0.0.master.0" />
+            <property name="CI_PROJECT_NAME" value="riscos-prm" />
+            <property name="CI_PROJECT_VERSION" value="0.0..1" />
+            <property name="CI_SHA" value="b9cf36187b24d0ddc9114820c1766a488c3ef6cd" />
+            <property name="CI_SHORT_BRANCH" value="" />
+            <property name="Linter" value="xmllint" />
+            <property name="SOURCE_DATE_EPOCH" value="1547798639" />
+            <property name="xmllint version" value="20901" />
+        </properties>
+        <testcase classname="lint" file="src/style/input.xml" line="15" name="Lint src/style/input.xml" time="0.259">
+            <failure message="Element section content does not follow the DTD, expecting (p | subsection | subsubsection | category | swi-definition | service-definition | upcall-definition | message-definition | command-definition | sysvar-definition | error-definition | entry-definition | vector-definition | extended-example | import)*, got (p fixme )" type="validity error">&lt;/section&gt;
+                ^
+            </failure>
+        </testcase>
+        <testcase classname="lint" file="src/style/input.xml" line="21" name="Lint src/style/input.xml" time="0.039">
+            <failure message="Element image does not carry attribute width" type="validity error">&lt;image type="png" src="colourdbox.png" /&gt;
+                ^
+            </failure>
+        </testcase>
+    </testsuite></testsuites>
