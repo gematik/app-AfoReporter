@@ -17,7 +17,7 @@ public class Step {
     private final List<String> lines;
 
     public static Step fromLine(final String line) {
-        final String kw = getKeyword(line);
+        final String kw = getKeyword(line.trim());
         return KEYWORDS.stream()
             .filter(keyword -> keyword.equals(kw))
             .map(keyword -> new Step(keyword, new ArrayList<>(List.of(line))))

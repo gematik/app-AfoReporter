@@ -48,14 +48,14 @@ public class FeatureParser {
                     if (step == null) {
                         throw new FeatureParserException("Step not set!");
                     }
-                    step.getLines().add(line);
+                    step.getLines().add(excLine);
                 } else if (line.startsWith("#") || line.isBlank() || parseTagsFromLine(line, tags)) {
                     // skip comments
                 } else if (parseGherkinStructFromLine(line, tags, feature, child)) {
                     mode = ParseMode.DESCRIPTION;
                 } else {
                     final AtomicReference<ParseMode> moderef = new AtomicReference<>(mode);
-                    step = getStep(child, description, step, line, moderef);
+                    step = getStep(child, description, step, line, excLine, moderef);
                     mode = moderef.get();
                 }
             }
@@ -69,11 +69,13 @@ public class FeatureParser {
     }
 
     private Step getStep(final AtomicReference<Scenario> child, final StringBuilder description,
-        Step step, final String line, final AtomicReference<ParseMode> moderef) {
+        Step step, final String line, final String origLine, final AtomicReference<ParseMode> moderef) {
         final String keyword = Step.getKeyword(line);
         if (moderef.get() == ParseMode.DESCRIPTION) {
             if (!Step.KEYWORDS.contains(keyword)) {
-                description.append(description).append(line).append("\n");
+                if (!line.equals("```")) {
+                    description.append(line).append("\n");
+                }
             } else {
                 child.get().setDescription(description.toString());
                 description.setLength(0);
@@ -85,7 +87,11 @@ public class FeatureParser {
                 step = Step.fromLine(line);
                 moderef.set(addStepToScenario(child.get(), step));
             } else {
-                step.getLines().add(line);
+                if (line.equals("\"\"\"") || line.equals("'''")) {
+                    step.getLines().add(origLine);
+                } else {
+                    step.getLines().add(line);
+                }
             }
         } else {
             throw new FeatureParserException("Unable to parse line");

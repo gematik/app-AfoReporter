@@ -34,7 +34,6 @@ public class AfoData {
     private String refURL;
     private String description;
     private String petStatus;
-    private String authorMail;
 
     // default ctor needed for Jackson object mapper
     public AfoData() {
@@ -71,11 +70,11 @@ public class AfoData {
         return afoStatus != null ? afoStatus : AfoStatus.NOTSET;
     }
 
-    // used by PolarionRetriever
+    // used by Polarion Toolbox
     public void sanitizeAfoId() {
         final String afoid = getId();
-        final int adash = afoid.indexOf("A_");
-        final int dash = afoid.indexOf('-', adash + 1);
+        final int underScore = afoid.indexOf("_");
+        final int dash = afoid.indexOf('-', underScore + 1);
         if (dash != -1) {
             setVersion(afoid.substring(dash + 1));
             setId(afoid.substring(0, dash));

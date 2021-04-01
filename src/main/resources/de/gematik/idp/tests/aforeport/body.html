@@ -5402,6 +5402,24 @@
       }
       return false;
     });
+
+    $('.afodiv a').hover(function (e) { // Hover event
+      var titleText = $(this).attr('title');
+      $(this).data('tiptext', titleText).removeAttr('title');
+      if (titleText === '') {
+        return;
+      }
+      $('<p class="tooltip"></p>').html(titleText).appendTo('body').css(
+          {'top': (e.pageY - 10) + 'px', 'left': (e.pageX + 20) + 'px'}).show();
+    }, function () { // Hover off event
+      $(this).attr('title', $(this).data('tiptext'));
+      if ($(this).attr('title') === '') {
+        return;
+      }
+      $('.tooltip').remove();
+    }).mousemove(function (e) { // Mouse move event
+      $('.tooltip').css('top', (e.pageY - 10) + 'px').css('left', (e.pageX + 20) + 'px');
+    });
   });
 </script>
 </body>

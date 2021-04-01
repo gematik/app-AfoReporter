@@ -1,3 +1,7 @@
+# Release 1.2.0
+Complete rewrite of Gherkin parser
+Added details to requirements as tool tips
+
 # Release 1.1.1
 Fixing folder cmd line parameters 
 
